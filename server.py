@@ -33,7 +33,7 @@ async def on_message(message):
     await client.process_commands(msg)
 
 
-@tasks.loop(seconds=5)
+@tasks.loop(seconds=3)
 async def change_status():
     await client.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=next(status)), status=discord.Status.idle)
 

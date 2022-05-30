@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import random
 from server import prefix
+from common.Game import Game
 
 player1 = ""
 player2 = ""
@@ -10,6 +11,13 @@ gameOver = True
 global count
 
 board = []
+
+
+def instructions():
+    msg = "**TicTacToe Help**\n"
+    msg += "Play TicTacToe against an opponent or yourself!\n"
+    msg += f"{prefix}ttt start @opponent.\n"
+    return msg
 
 
 def checkwinner(winningconditions, mark):
@@ -31,13 +39,19 @@ winningConditions = [
     ]
 
 
-class TicTacToe(commands.Cog):
+class TicTacToe(Game):
 
     def __init__(self, client):
         self.client = client
+        self.help_message = None
 
-    @commands.command()
-    async def tictactoe(self, ctx, p2: discord.Member):
+    @commands.group(name='tictactoe', aliases=['ttt', 'TTT'])
+    async def tictactoe(self, ctx):
+        self.help_message = ctx.send(instructions())
+        await self.help_message
+
+    @tictactoe.command()
+    async def start(self, ctx, p2: discord.Member):
         global count
         global player1
         global player2
@@ -77,7 +91,7 @@ class TicTacToe(commands.Cog):
         else:
             await ctx.send("A game is already in progress! Finish it before starting a new one.")
 
-    @commands.command()
+    @tictactoe.command()
     async def place(self, ctx, pos: int):
         global turn
         global player1
@@ -89,9 +103,9 @@ class TicTacToe(commands.Cog):
         if not gameOver:
             mark = ""
             if turn == ctx.author:
-                if turn == player1:
+                if turn == player1 and count % 2 == 1:
                     mark = ":regional_indicator_x:"
-                elif turn == player2:
+                elif turn == player2 and count % 2 == 0:
                     mark = ":o2:"
                 if 0 < pos < 10 and board[pos - 1] == ":white_large_square:":
                     board[pos - 1] = mark
@@ -122,12 +136,14 @@ class TicTacToe(commands.Cog):
                         turn = player1
                 else:
                     await ctx.send("Be sure to choose an integer between 1 and 9 (inclusive) and an unmarked tile.")
-            else:
+            elif ctx.author == player1 or ctx.author == player2:
                 await ctx.send("It is not your turn.")
+            else:
+                await ctx.send("You are not in this game.")
         else:
             await ctx.send('Please start a new game using the '+prefix +'tictactoe command.')
 
-    @commands.command()
+    @tictactoe.command()
     async def endgame(self, ctx):
         global gameOver
         if not gameOver and (ctx.author == player1 or ctx.author == player2):
