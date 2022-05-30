@@ -1,9 +1,9 @@
 import discord
 import os
 import json
-from discord import VoiceChannel
-from discord.ext import commands
+from discord.ext import commands, tasks
 from dotenv import load_dotenv, find_dotenv
+from itertools import cycle
 
 load_dotenv(find_dotenv())
 TOKEN = os.getenv('TOKEN')
@@ -12,22 +12,30 @@ TOKEN = os.getenv('TOKEN')
 with open("./config.json") as config_file:
     config = json.load(config_file)
 
-client = commands.Bot(command_prefix=config['prefix'], intents=discord.Intents.all())
+client = commands.Bot(command_prefix=config['prefix'], intents=discord.Intents.all(), status=discord.Status.idle)
 
 prefix = config['prefix']
+status = cycle(['[help', 'You!'])
 
 
 # Running confirmation
 @client.event
 async def on_ready():
+    change_status.start()
     print("Party-Time-Bot running")
+
 
 @client.event
 async def on_message(message):
     msg = message
-    if msg.content.startswith(".hello"):
+    if msg.content.startswith(prefix+'hello'):
         await msg.channel.send(f'Hello {msg.author.name}')
     await client.process_commands(msg)
+
+
+@tasks.loop(seconds=5)
+async def change_status():
+    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=next(status)))
 
 
 @client.command()
@@ -63,7 +71,7 @@ async def reload(ctx):
 
 @client.command()
 async def ping(ctx):
-    await ctx.send('pong')
+    await ctx.send(f'pong {round(client.latency * 1000)}ms')
 
 
 for filename in os.listdir('./cogs'):

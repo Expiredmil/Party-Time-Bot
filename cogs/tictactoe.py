@@ -1,60 +1,41 @@
 import discord
-import random
 from discord.ext import commands
-from server import prefix
-from common.Game import Game
-
-
-
-def instructions():
-    msg = "**TicTacToe Help**\n"
-    msg += "test1\n"
-    msg += f"`{prefix}tictactoe @player1 @player2 to start!.\n"
-    return msg
-
+import random
 
 player1 = ""
 player2 = ""
 turn = ""
 gameOver = True
+global count
 
 board = []
 
-winningconditions = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6]
-]
 
-
-def checkwinner(self, winningconditions, mark):
+def checkwinner(winningconditions, mark):
     global gameOver
     for condition in winningconditions:
         if board[condition[0]] == mark and board[condition[1]] == mark and board[condition[2]] == mark:
             gameOver = True
 
-class TicTacToe(Game):
+
+winningConditions = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6]
+    ]
+
+
+class TicTacToe(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self._game_name = "tictactoe"
-        self._game_command = f"{prefix}tictactoe"
-        self.help_message = None
 
-        # Game instructions
-
-    @commands.group(name='tictactoe', aliases=['tictactoe', 'tictactoe'], case_insensitive=True, invoke_without_command=False)
-    async def tictactoe(self, ctx):
-        self.help_message = ctx.send(instructions())
-        await self.help_message
-
-
-    @tictactoe.command()
+    @commands.command()
     async def tictactoe(self, ctx, p1: discord.Member, p2: discord.Member):
         global count
         global player1
@@ -95,7 +76,7 @@ class TicTacToe(Game):
         else:
             await ctx.send("A game is already in progress! Finish it before starting a new one.")
 
-    @tictactoe.command()
+    @commands.command()
     async def place(self, ctx, pos: int):
         global turn
         global player1
@@ -111,7 +92,7 @@ class TicTacToe(Game):
                     mark = ":regional_indicator_x:"
                 elif turn == player2:
                     mark = ":o2:"
-                if 0 < pos < 10 and board[pos - 1] == ":white_large_square:" :
+                if 0 < pos < 10 and board[pos - 1] == ":white_large_square:":
                     board[pos - 1] = mark
                     count += 1
 
@@ -125,7 +106,7 @@ class TicTacToe(Game):
                         else:
                             line += " " + board[x]
 
-                    checkwinner(self, winningconditions, mark)
+                    checkwinner(winningConditions, mark)
                     print(count)
                     if gameOver:
                         await ctx.send(mark + " wins!")
@@ -144,6 +125,13 @@ class TicTacToe(Game):
                 await ctx.send("It is not your turn.")
         else:
             await ctx.send("Please start a new game using the !tictactoe command.")
+
+    @commands.command()
+    async def endgame(self, ctx):
+        global gameOver
+        if not gameOver:
+            gameOver = True
+            await ctx.send("Game has been ended.")
 
     @tictactoe.error
     async def tictactoe_error(self, ctx, error):

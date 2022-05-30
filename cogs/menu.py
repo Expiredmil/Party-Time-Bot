@@ -1,6 +1,7 @@
 from discord.ext import commands, tasks
 from server import prefix
 
+
 class MenuSession:
     def __init__(self, ctx, parent, message_menu):
         self.__ctx = ctx
@@ -14,6 +15,7 @@ class MenuSession:
     @property
     def message_menu(self):
         return self.__message_menu
+
 
 class Menu (commands.Cog):
 
@@ -36,7 +38,6 @@ class Menu (commands.Cog):
         await message_menu.add_reaction("🔢")
         self.menu_sessions.append(MenuSession(ctx, self, message_menu))
 
-
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
         if user == self.client.user:
@@ -56,6 +57,7 @@ class Menu (commands.Cog):
         if command != None:
             await ctx.invoke(command)
         return
+
 
 def setup(client):
     client.add_cog(Menu(client))
