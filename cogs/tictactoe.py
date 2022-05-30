@@ -156,7 +156,7 @@ class TicTacToe(Game):
             else:
                 await ctx.send("You cannot end a game that you are not in!")
         else:
-            await ctx.send("There is not started game to end!")
+            await ctx.send("There is no started game to end!")
 
     @tictactoe.error
     async def tictactoe_error(self, ctx, error):
