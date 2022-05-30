@@ -17,6 +17,7 @@ def instructions():
     msg = "**TicTacToe Help**\n"
     msg += "Play TicTacToe against an opponent or yourself!\n"
     msg += f"{prefix}ttt start @opponent\n"
+    msg += f"Then do: {prefix}ttt place (1-9)\n"
     return msg
 
 
@@ -146,9 +147,16 @@ class TicTacToe(Game):
     @tictactoe.command()
     async def endgame(self, ctx):
         global gameOver
-        if not gameOver and (ctx.author == player1 or ctx.author == player2):
-            gameOver = True
-            await ctx.send("Game has been ended.")
+        global count
+        if not gameOver:
+            if ctx.author == player1 or ctx.author == player2:
+                gameOver = True
+                count = 0
+                await ctx.send("Game has been ended.")
+            else:
+                await ctx.send("You cannot end a game that you are not in!")
+        else:
+            await ctx.send("There is not started game to end!")
 
     @tictactoe.error
     async def tictactoe_error(self, ctx, error):
