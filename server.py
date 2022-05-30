@@ -12,7 +12,7 @@ TOKEN = os.getenv('TOKEN')
 with open("./config.json") as config_file:
     config = json.load(config_file)
 
-client = commands.Bot(command_prefix=config['prefix'], intents=discord.Intents.all(), status=discord.Status.idle)
+client = commands.Bot(command_prefix=config['prefix'], intents=discord.Intents.all())
 
 prefix = config['prefix']
 status = cycle(['[help', 'You!'])
@@ -35,7 +35,7 @@ async def on_message(message):
 
 @tasks.loop(seconds=5)
 async def change_status():
-    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=next(status)))
+    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=next(status)), status=discord.Status.idle)
 
 
 @client.command()
