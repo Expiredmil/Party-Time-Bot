@@ -16,7 +16,7 @@ board = []
 def instructions():
     msg = "**TicTacToe Help**\n"
     msg += "Play TicTacToe against an opponent or yourself!\n"
-    msg += f"{prefix}ttt start @opponent.\n"
+    msg += f"{prefix}ttt start @opponent\n"
     return msg
 
 
@@ -45,7 +45,7 @@ class TicTacToe(Game):
         self.client = client
         self.help_message = None
 
-    @commands.group(name='tictactoe', aliases=['ttt', 'TTT'])
+    @commands.group(name='tictactoe', aliases=['ttt', 'TTT'], invoke_without_command=True)
     async def tictactoe(self, ctx):
         self.help_message = ctx.send(instructions())
         await self.help_message
