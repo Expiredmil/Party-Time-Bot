@@ -1,5 +1,5 @@
-from discord.ext import commands, tasks
-from server import prefix
+from discord.ext import commands
+
 
 class MenuSession:
     def __init__(self, ctx, parent, message_menu):
@@ -15,6 +15,7 @@ class MenuSession:
     def message_menu(self):
         return self.__message_menu
 
+
 class Menu (commands.Cog):
 
     def __init__(self, client):
@@ -25,15 +26,14 @@ class Menu (commands.Cog):
     @commands.group(name='menu')
     async def menu(self, ctx):
         msg = '_*****Main menu*****_\n'
-        msg += f'🎱 : `{prefix}8b` - 8ball\n'
-        msg += f'⚪ : `{prefix}ch` - Checkers\n'
-        msg += f'❌ : `{prefix}o` - Checkers\n'
+        msg += f'🎱 : `{self.client.command_prefix}8b` - 8ball\n'
+        msg += f'⚪ : `{self.client.command_prefix}ch` - Checkers\n'
+        msg += f'❌ : `{self.client.command_prefix}o` - Checkers\n'
         message_menu = await ctx.channel.send(msg)
         await message_menu.add_reaction("🎱")
         await message_menu.add_reaction("⚪")
         await message_menu.add_reaction("❌")
         self.menu_sessions.append(MenuSession(ctx, self, message_menu))
-
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
@@ -48,10 +48,11 @@ class Menu (commands.Cog):
         elif reaction.emoji == "⚪":
             command = self.client.get_command("checkers")
         elif reaction.emoji == "❌":
-            command =self.client.get_command("tic-tac-toe")
-        if command != None:
+            command = self.client.get_command("tic-tac-toe")
+        if command is not None:
             await ctx.invoke(command)
         return
+
 
 def setup(client):
     client.add_cog(Menu(client))

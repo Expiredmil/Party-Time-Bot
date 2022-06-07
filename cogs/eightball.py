@@ -1,14 +1,12 @@
 from discord.ext import commands
-from server import prefix
 from common.Game import Game
-
 import random
 
 
 def instructions():
     msg = "**Eight-ball Help**\n"
     msg += "The magic 8ball will tell your future, ask anything you want to him\n"
-    msg += f"`{prefix}eb ask [question]`: Ask 8ball by filling in the question.\n"
+    msg += f"`eb ask [question]`: Ask 8ball by filling in the question.\n"
     return msg
 
 
@@ -17,7 +15,7 @@ class EightBall(Game):
     def __init__(self, client):
         self.client = client
         self._game_name = "8ball"
-        self._game_command = f"{prefix}eightball"
+        self._game_command = f"{self.client.command_prefix}eightball"
         self.help_message = None
 
     # Game instructions

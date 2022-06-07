@@ -1,25 +1,35 @@
 import discord
 import os
-import json
-from discord import VoiceChannel
 from discord.ext import commands
+from tortoise import Tortoise
+from models import GuildConfig
 from dotenv import load_dotenv, find_dotenv
+import constants
 
 load_dotenv(find_dotenv())
 TOKEN = os.getenv('TOKEN')
 
-# Open json file
-with open("./config.json") as config_file:
-    config = json.load(config_file)
 
-client = commands.Bot(command_prefix=config['prefix'], intents=discord.Intents.all())
+async def get_prefix(bot: commands.Bot, message: discord.Message):
+    config = await GuildConfig.filter(id=message.guild.id).get_or_none()
+    return config.prefix if config else constants.DEFAULT_PREFIX
 
-prefix = config['prefix']
+
+client = commands.Bot(command_prefix=get_prefix, intents=discord.Intents.all())
+
+
+async def connect_db():
+    await Tortoise.init(
+        db_url=f"postgres://postgres:7s7m50jintgs@localhost:5432/testingbot",
+        modules={'models': ["models"]}
+    )
+    await Tortoise.generate_schemas()
 
 
 # Running confirmation
 @client.event
 async def on_ready():
+    await connect_db()
     print("Party-Time-Bot running")
 
 
