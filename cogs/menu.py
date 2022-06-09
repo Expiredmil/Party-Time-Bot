@@ -28,10 +28,13 @@ class Menu (commands.Cog):
         msg += f'🎱 : `{prefix}8b` - 8ball\n'
         msg += f'⚪ : `{prefix}ch` - Checkers\n'
         msg += f'❌ : `{prefix}o` - Checkers\n'
+        msg+= f'📮 : `{prefix}mb` - mail box\n'
+
         message_menu = await ctx.channel.send(msg)
         await message_menu.add_reaction("🎱")
         await message_menu.add_reaction("⚪")
         await message_menu.add_reaction("❌")
+        await message_menu.add_reaction("📮")
         self.menu_sessions.append(MenuSession(ctx, self, message_menu))
 
 
@@ -44,7 +47,6 @@ class Menu (commands.Cog):
         command = None
         if reaction.emoji == "🎱":
             command = self.client.get_command("eightball")
-            self.command_sessions.append(command)
         elif reaction.emoji == "⚪":
             command = self.client.get_command("checkers")
         elif reaction.emoji == "❌":

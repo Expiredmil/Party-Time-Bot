@@ -1,10 +1,12 @@
 from discord.ext import commands
-
+from discord import User
+from common import Player
 
 class Game(commands.Cog):
 
     def __init__(self, client):
         self._client = client
+        self.sessions = []
         self._max_players = 0
         self._min_players = 0
         self._game_name = ""
@@ -18,10 +20,10 @@ class Game(commands.Cog):
     def min_players(self):
         return self._min_players
 
-    @max_players.setter
-    def set_max_players(self, max_players):
-        self._max_players = max_players
+    @property
+    def sessions(self):
+        return self.sessions
 
-    @min_players.setter
-    def set_min_players(self, min_players):
-        self._min_players = min_players
+    @sessions.setter
+    def sessions(self, value):
+        self._sessions = value
