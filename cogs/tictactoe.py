@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 import random
-from server import prefix
 from common.Game import Game
 
 player1 = ""
@@ -12,13 +11,6 @@ global count
 
 board = []
 
-
-def instructions():
-    msg = "**TicTacToe Help**\n"
-    msg += "Play TicTacToe against an opponent or yourself!\n"
-    msg += f"`{prefix}ttt start @opponent` - start a game again opponent\n"
-    msg += f"` {prefix}ttt place (1-9)` - during game place on tile\n"
-    return msg
 
 
 def checkwinner(winningconditions, mark):
@@ -44,12 +36,19 @@ class TicTacToe(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.help_message = None
+        self.prefix = None
+
+    async def instructions(self, ctx):
+        self.prefix = await self.client.get_prefix(ctx)
+        msg = "**TicTacToe Help**\n"
+        msg += "Play TicTacToe against an opponent or yourself!\n"
+        msg += f"`{self.prefix}ttt start @opponent` - start a game again opponent\n"
+        msg += f"` {self.prefix}ttt place (1-9)` - during game place on tile\n"
+        return msg
 
     @commands.group(name='tictactoe', aliases=['ttt'], invoke_without_command=True)
     async def tictactoe(self, ctx):
-        self.help_message = ctx.send(instructions())
-        await self.help_message
+        await ctx.send(await self.instructions(ctx))
 
     @tictactoe.command()
     async def start(self, ctx, p2: discord.Member):
@@ -142,7 +141,7 @@ class TicTacToe(commands.Cog):
             else:
                 await ctx.send("You are not in this game.")
         else:
-            await ctx.send('Please start a new game using the '+prefix +'tictactoe command.')
+            await ctx.send('Please start a new game using the '+ self.prefix +'tictactoe command.')
 
     @tictactoe.command()
     async def endgame(self, ctx):
@@ -170,12 +169,12 @@ class TicTacToe(commands.Cog):
     async def place_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             if gameOver:
-                await ctx.send('Please start a new game using the '+prefix +'tictactoe command.')
+                await ctx.send('Please start a new game using the '+ self.prefix +'tictactoe command.')
             else:
                 await ctx.send("Please enter a position you would like to mark.")
         elif isinstance(error, commands.BadArgument):
             if gameOver:
-                await ctx.send('Please start a new game using the '+prefix +'tictactoe command.')
+                await ctx.send('Please start a new game using the '+ self.prefix +'tictactoe command.')
             else:
                 await ctx.send("Please make sure to enter an integer.")
 

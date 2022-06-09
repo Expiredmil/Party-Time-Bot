@@ -1,7 +1,6 @@
 import asyncio
 
 from discord.ext import commands
-from server import prefix
 from common.Game import Game
 from discord_ui import UI, Button
 
@@ -12,16 +11,6 @@ import discord.embeds
 from asyncio import TimeoutError
 
 
-def instructions():
-
-    msg = f"Start a game by typing `{prefix}ws`.\n"
-    msg += f"Guess the scrambled word by typing `{prefix}ws [guess]`.\n"
-    msg += f"Shuffle the letters from the word by typing `{prefix}ws shuffle`.\n"
-    msg += f"Show the word again by typing `{prefix}ws repeat`.\n"
-    msg += f"Quit an existing game by typing `{prefix}ws quit`.\n"
-    msg += f"Open this help menu by typing `{prefix}ws help`.\n"
-    return msg
-
 
 class WordScramble(commands.Cog):
 
@@ -29,7 +18,7 @@ class WordScramble(commands.Cog):
     def __init__(self, client):
         self.client = client
         self._game_name = "wordscramble"
-        self._game_command = f"{prefix}wordscramble"
+        self._game_command = f"{self.client.command_prefix}wordscramble"
         self.help_message = ""
         self.answer = ""
         self.shuffledWord = ""
@@ -45,6 +34,16 @@ class WordScramble(commands.Cog):
         self.restartButton = Button(label="Play again", custom_id="play_again", color="blurple", emoji="🔁")
         self.ctxInit = 0
 
+    def instructions(self):
+
+        msg = f"Start a game by typing `{self.client.command_prefix}ws`.\n"
+        msg += f"Guess the scrambled word by typing `{self.client.command_prefix}ws [guess]`.\n"
+        msg += f"Shuffle the letters from the word by typing `{self.client.command_prefix}ws shuffle`.\n"
+        msg += f"Show the word again by typing `{self.client.command_prefix}ws repeat`.\n"
+        msg += f"Quit an existing game by typing `{self.client.command_prefix}ws quit`.\n"
+        msg += f"Open this help menu by typing `{self.client.command_prefix}ws help`.\n"
+        msg += "Type `prefix?` for necessary prefix\n"
+        return msg
 
     async def sendEmbed(self, ctx):
         try:
@@ -121,7 +120,7 @@ class WordScramble(commands.Cog):
 
 
     async def startGame(self, ctx, *args):
-        await ctx.send(f"Guess the scrambled word by typing `{prefix}ws [guess]`.\n")
+        await ctx.send(f"Guess the scrambled word by typing `{self.client.command_prefix}ws [guess]`.\n")
         with open(os.path.join(os.path.dirname(__file__), '../common/wordlist.txt'),
                   'r') as f:                                                            # List with possible words in a separate file
             wordList = [line.strip() for line in f]
@@ -167,7 +166,7 @@ class WordScramble(commands.Cog):
 
     @wordscramble.command(aliases=[])
     async def help(self, ctx):
-        self.help_message = ctx.send(instructions())
+        self.help_message = ctx.send(self.instructions())
         await self.help_message
         return
 

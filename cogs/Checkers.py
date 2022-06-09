@@ -4,17 +4,6 @@ import discord
 from discord.ext import commands
 from discord_ui import Button
 
-from server import prefix
-
-
-def instructions():
-    msg = "**Checkers Help**\n"
-    msg += "Capture all opponent tokens! Your tokens can move one space diagonally each turn, or capture an adjacent\n" \
-           "opponent piece by jumping over it. If you can capture, you must. If a token reaches the end of the board,\n" \
-           "it gains the ability to move multiple spaces and move backwards.\n"
-    msg += f"`{prefix}ch start`: Start a game\n"
-    return msg
-
 
 class CheckersGame(commands.Cog):
 
@@ -37,6 +26,14 @@ class CheckersGame(commands.Cog):
         self.next_movable = False
         self.movable_checkers = []
         self.dirs = ['nw', 'ne', 'sw', 'se']
+
+    async def instructions(self, ctx):
+        msg = "**Checkers Help**\n"
+        msg += "Capture all opponent tokens! Your tokens can move one space diagonally each turn, or capture an adjacent\n" \
+               "opponent piece by jumping over it. If you can capture, you must. If a token reaches the end of the board,\n" \
+               "it gains the ability to move multiple spaces and move backwards.\n"
+        msg += f"`{await self.client.get_prefix(ctx)}ch start`: Start a game\n"
+        return msg
 
     def init_board(self):
         for i in range(self.SIZE):
@@ -345,7 +342,7 @@ class CheckersGame(commands.Cog):
         join_button = Button("Join", color="green")
         msg = await ctx.send(embed=embed, components=[join_button])
         try:
-            btn = await msg.wait_for("button", self.client, timeout=10)
+            btn = await msg.wait_for("button", self.client, timeout=20)
             self.player2_id = btn.author.id
             self.player2 = btn.author.display_name
             self.select_mode = False
@@ -679,7 +676,7 @@ class CheckersGame(commands.Cog):
 
     @commands.group(name="checkers", aliases=['ch'], case_insensitive=True, invoke_without_command=True)
     async def checkers(self, ctx):
-        await ctx.send(instructions())
+        await ctx.send(await self.instructions(ctx))
 
     @checkers.command()
     async def start(self, ctx):
