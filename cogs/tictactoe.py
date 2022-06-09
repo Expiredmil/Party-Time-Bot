@@ -40,7 +40,7 @@ winningConditions = [
     ]
 
 
-class TicTacToe(Game):
+class TicTacToe(commands.Cog):
 
     def __init__(self, client):
         self.client = client

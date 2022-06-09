@@ -23,7 +23,8 @@ def instructions():
     return msg
 
 
-class WordScramble(commands.Cog): #commands.Coq
+class WordScramble(commands.Cog):
+
 
     def __init__(self, client):
         self.client = client

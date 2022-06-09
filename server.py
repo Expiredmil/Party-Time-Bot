@@ -73,3 +73,4 @@ for filename in os.listdir('./cogs'):
         print(f'Cog loaded {file}')
 
 client.run(TOKEN)
+
