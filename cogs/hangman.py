@@ -18,14 +18,17 @@ def instructions():
     return msg
 
 
-class HangManPlayer(Player):
-    def __init__(self, user: User):
-        super().__init__(user)
+class HangManPlayer(commands.Cog):
+    class Player:
+        def __int__(self, user: User):
+            self.user = user
+
+        def user(self):
+            return self.user
 
 
-class HangManGame(Game):
+class HangManGame(commands.Cog):
     def __init__(self, client):
-        super().__init__(client)
         self.players = []
         self.client = client
         self._game_name = "Hang Man"
