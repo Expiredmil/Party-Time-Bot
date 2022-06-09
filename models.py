@@ -19,3 +19,8 @@ class LeaveConfig(Model):
     guild_id = fields.BigIntField(pk=True, unique=True, nullable=False)
     channel_id = fields.BigIntField(nullable=False)
     message = fields.TextField()
+
+
+class Members(Model):
+    member_id = fields.BigIntField(pk=True, unique=True, nullable=False)
+    balance = fields.BigIntField(nullable=False, default=100)

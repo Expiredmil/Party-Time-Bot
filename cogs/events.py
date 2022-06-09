@@ -1,10 +1,10 @@
 from discord.ext import commands
 import discord
-from models import GuildConfig, WelcomeConfig, LeaveConfig
+from models import GuildConfig, WelcomeConfig, LeaveConfig, Members
 
 
 class Events(commands.Cog):
-    def __int__(self, client: commands.Bot):
+    def __int__(self, client):
         self.client = client
 
     @commands.Cog.listener()
@@ -15,6 +15,8 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         config = await GuildConfig.filter(id=member.guild.id).get_or_none()
+        new_member = Members(member_id=member.id)
+        await new_member.save()
         if not config:
             return
 

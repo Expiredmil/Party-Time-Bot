@@ -2,7 +2,7 @@ import discord
 import os
 from discord.ext import commands
 from tortoise import Tortoise
-from models import GuildConfig
+from models import GuildConfig, Members
 from dotenv import load_dotenv, find_dotenv
 import constants
 
@@ -36,9 +36,13 @@ async def on_ready():
 @client.event
 async def on_message(message):
     msg = message
-    if msg.content.startswith(".hello"):
+    member = await Members.filter(member_id=msg.author.id).get_or_none()
+    cur_bal = member.balance
+    if msg.content.startswith("hello"):
+        await Members.filter(member_id=msg.author.id).update(balance=cur_bal-1)
         await msg.channel.send(f'Hello {msg.author.name}')
-
+    if msg.content.startswith("bal?"):
+        await msg.channel.send(f'{msg.author.name}, your bal = {cur_bal}')
     await client.process_commands(msg)
 
 

@@ -3,10 +3,11 @@ import discord
 import typing
 import constants
 from models import GuildConfig, WelcomeConfig, LeaveConfig
+from server import client
 
 
 class Config(commands.Cog):
-    def __int__(self, client: commands.Bot):
+    def __int__(self, client):
         self.client = client
 
     @commands.command()
@@ -43,9 +44,8 @@ class Config(commands.Cog):
     async def setwelcome(self, ctx: commands.Context):
         async def ask_welcome_msg():
             try:
-                msg: discord.Message = await self.client.wait_for(
-                    "message", check=lambda x: x.author.id == ctx.author.id,
-                    timeout=20
+                msg: discord.Message = await client.wait_for(
+                   "message", check=lambda x: x.author.id == ctx.author.id, timeout=20
                 )
                 return await commands.TextChannelConverter().convert(ctx, msg.content)
             except commands.errors.ChannelNotFound as e:
@@ -56,7 +56,7 @@ class Config(commands.Cog):
         channel = await ask_welcome_msg()
 
         await ctx.send("Please enter your welcome message below. use `{}` where you want to mention the user")
-        welcome_msg = (await self.client.wait_for(
+        welcome_msg = (await client.wait_for(
             "message", check=lambda x: x.author.id == ctx.author.id,
             timeout=20
         )).content
@@ -95,7 +95,7 @@ class Config(commands.Cog):
     async def setleave(self, ctx: commands.Context):
         async def ask_leave_msg():
             try:
-                msg: discord.Message = await self.client.wait_for(
+                msg: discord.Message = await client.wait_for(
                     "message", check=lambda x: x.author.id == ctx.author.id,
                     timeout=20
                 )
@@ -108,7 +108,7 @@ class Config(commands.Cog):
         channel = await ask_leave_msg()
 
         await ctx.send("Please enter your leave message below. use `{}` where you want to mention the user")
-        leave_msg = (await self.client.wait_for(
+        leave_msg = (await client.wait_for(
             "message", check=lambda x: x.author.id == ctx.author.id,
             timeout=20
         )).content
