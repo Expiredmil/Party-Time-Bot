@@ -165,15 +165,14 @@ class CheckersGame(commands.Cog):
 
     def can_hit_dirs(self, x, y):
         directions = []
-        if not self.is_king(x, y):
-            if self.hittable_dir(x, y, -2, -2) and self.board[x][y] != 'r':
-                directions.append("nw")
-            if self.hittable_dir(x, y, 2, -2) and self.board[x][y] != 'r':
-                directions.append("ne")
-            if self.hittable_dir(x, y, -2, 2) and self.board[x][y] != 'b':
-                directions.append("sw")
-            if self.hittable_dir(x, y, 2, 2) and self.board[x][y] != 'b':
-                directions.append("se")
+        if self.hittable_dir(x, y, -2, -2) and self.board[x][y] != 'r':
+            directions.append("nw")
+        if self.hittable_dir(x, y, 2, -2) and self.board[x][y] != 'r':
+            directions.append("ne")
+        if self.hittable_dir(x, y, -2, 2) and self.board[x][y] != 'b':
+            directions.append("sw")
+        if self.hittable_dir(x, y, 2, 2) and self.board[x][y] != 'b':
+            directions.append("se")
         return directions
 
     def move_up_left(self, xfrom, yfrom):
