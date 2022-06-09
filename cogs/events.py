@@ -15,7 +15,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         config = await GuildConfig.filter(id=member.guild.id).get_or_none()
-        new_member = Members(member_id=member.id)
+        new_member = Members(member_id=member.id, identity=member)
         await new_member.save()
         if not config:
             return
