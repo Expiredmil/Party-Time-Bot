@@ -20,7 +20,7 @@ client = commands.Bot(command_prefix=get_prefix, intents=discord.Intents.all())
 
 async def connect_db():
     await Tortoise.init(
-        db_url=f"postgres://postgres:7s7m50jintgs@localhost:5432/testingbot",
+        db_url=f"postgres://yfkkvkgn:ZfcT2glUJ_AnTVrJTlUriBDlNItzFYK7@tyke.db.elephantsql.com/yfkkvkgn",
         modules={'models': ["models"]}
     )
     await Tortoise.generate_schemas()
