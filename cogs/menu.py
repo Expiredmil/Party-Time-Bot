@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord_ui import Button
 
+
 class Menu(commands.Cog):
 
     def __init__(self, client):
@@ -37,8 +38,10 @@ class Menu(commands.Cog):
         elif btn.custom_id == "ws":
             command = self.client.get_command(btn.custom_id)
         if btn.custom_id is not None:
+            await message.delete()
             await ctx.invoke(command)
         return
+
 
 def setup(client):
     client.add_cog(Menu(client))

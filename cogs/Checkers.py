@@ -5,6 +5,13 @@ from discord.ext import commands
 from discord_ui import Button
 
 
+async def add_to_balance(player_id, x):
+    from models import Members
+    member = await Members.filter(member_id=player_id).get_or_none()
+    cur_bal = member.balance
+    await Members.filter(member_id=player_id).update(balance=cur_bal + x)
+
+
 class CheckersGame(commands.Cog):
 
     def __init__(self, client):
@@ -582,9 +589,15 @@ class CheckersGame(commands.Cog):
         # Check for game over
         if self.game_over():
             if self.red_checkers == 0:
-                await ctx.send(f"{self.player2} has won!")
+                x = 1
+                await add_to_balance(self.player2_id, x)
+                await ctx.send(f"{self.player2} has won!\n" /
+                                f"Balance player 2 increased by {x}")
             else:
-                await ctx.send(f"{self.player1} has won!")
+                x = 1
+                await add_to_balance(self.player1_id, x)
+                await ctx.send(f"{self.player1} has won!"/
+                                f"Balance player 1 increased by {x}")
 
         # Set second player
         if self.player2_id == 0:
@@ -698,11 +711,11 @@ class CheckersGame(commands.Cog):
 
     @checkers.command()
     async def player1(self, ctx):
-        await ctx.send(f"Player 1 = {self.player1}, {self.player1_id}")
+        await ctx.send(f"Player 1 : {self.player1}, {self.player1_id}")
 
     @checkers.command()
     async def player2(self, ctx):
-        await ctx.send(f"Player 2 = {self.player2}, {self.player2_id}")
+        await ctx.send(f"Player 2 : {self.player2}, {self.player2_id}")
 
     @checkers.command()
     async def clear(self):
