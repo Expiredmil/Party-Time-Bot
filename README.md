@@ -12,3 +12,5 @@ _How to install_
 7. Open terminal in the Party-Time-Bot directory and type "py -m pip install -r ./requirements.txt"
 
 Note: Make sure to use python 3.10!
+
+We've also used some custom emoji's, to make it properly work, add https://emoji.gg/ bot to your server and execute this command in your server: "e!add 9285_noosethink"
