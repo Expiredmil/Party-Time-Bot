@@ -1,15 +1,13 @@
 import asyncio
 
 from discord.ext import commands
-from common.Game import Game
-from discord_ui import UI, Button
+from discord_ui import Button
 from models import Members
 
 import random
 import os
 import time
 import discord.embeds
-from asyncio import TimeoutError
 
 
 class WordScramble(commands.Cog):
@@ -82,7 +80,7 @@ class WordScramble(commands.Cog):
         elif not self.authorid is ctx.author.id is authorid:
             await ctx.send(
                 self.authorname + " is currently playing the game. Please wait until their game is finished.")
-        return (self.started and (self.authorid is ctx.author.id is authorid))
+        return self.started and (self.authorid is ctx.author.id is authorid)
 
     async def check_answer(self, ctx, guess):
         self.guesses += 1

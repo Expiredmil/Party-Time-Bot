@@ -100,7 +100,9 @@ class TicTacToe(commands.Cog):
                     if gameOver:
                         self.embed.description = str(turn) + " (" + mark + ") wins!"
                         await msg.delete()
-                        await self.add_to_balance(turn.id, 5)
+                        turn_id = turn.id
+                        await self.add_to_balance(turn_id, 5)
+                        self.embed.description=str(turn) + " (" + mark + ") wins!"
                         await self.send_embed(ctx, turn)
                         return
                     elif count >= 9:

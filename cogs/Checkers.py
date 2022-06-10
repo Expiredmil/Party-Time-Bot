@@ -589,12 +589,12 @@ class CheckersGame(commands.Cog):
         # Check for game over
         if self.game_over():
             if self.red_checkers == 0:
-                x = 1
+                x = 10
                 await add_to_balance(self.player2_id, x)
                 await ctx.send(f"{self.player2} has won!\n" /
                                 f"Balance player 2 increased by {x}")
             else:
-                x = 1
+                x = 10
                 await add_to_balance(self.player1_id, x)
                 await ctx.send(f"{self.player1} has won!"/
                                 f"Balance player 1 increased by {x}")
