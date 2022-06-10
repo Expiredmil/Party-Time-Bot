@@ -1,14 +1,21 @@
-from discord import Message, User, Embed
+from discord import User
 from discord.ext import commands
+import discord.embeds
+import discord.file
+import random
+import os
 
-from common.Game import Game
-from common.Player import Player
+from server import prefix
 
 
-# To-do list:
-# - Add check for word to be censored by the player "|| ... ||"
-# - Use embeds to display
-
+def instructions():
+    msg = "**Hang Man Help**\n"
+    msg += "A game of hang man where other players guess a word/phrase.\n"
+    msg += f"`{prefix}hm start : Start a game with a random word \n"
+    msg += f"{prefix}hm start [phrase] : Start a game with the given word \n"
+    msg += f"{prefix}hm gs [phrase/letter] : Guess a letter or the phrase \n"
+    msg += f"{prefix}hm quit : Quit a running game`"
+    return msg
 
 
 class HangManPlayer(commands.Cog):
@@ -25,61 +32,31 @@ class HangManGame(commands.Cog):
         self.players = []
         self.client = client
         self._game_name = "Hang Man"
-        self._game_command = f"{self.client.command_prefix}hangman"
+        self._game_command = f"{prefix}hangman"
         self._max_players = 5
+        self.help_message = instructions()
         self.word = ""
         self.guessed_letters = []
-        self.correct_letters = []
+        self.game_message = None
         self.game_started = False
         self.guesses = 7
         self.join_message = None
         self.context = None
         self.host = None
+        self.embed = discord.Embed()
 
-    async def instructions(self, ctx):
-        prefix = await self.client.get_prefix(ctx)
-        msg = "**Hang Man Help**\n"
-        msg += "A game of hang man where other players guess a word/phrase.\n"
-        msg += f"`{prefix}hm start [phrase]` : Start a game with the given word \n"
-        msg += f"`{prefix}hm gs [phrase/letter]` : Guess a letter or the phrase \n"
-        msg += f"`{prefix}hm quit` : Quit a running game\n"
-        return msg
+    # ~~~~~~~~~~~~~~~~~~~ Editing Embed ~~~~~~~~~~~~~~~~~~~ #
 
-    # @property
-    # def join_message(self):
-    #     return self.join_message
-    #
-    # @join_message.setter
-    # def join_message(self, message: Message):
-    #     self.join_message = message
+    # Updates self.embed
+    async def update_embed(self):
+        self.embed.description = await self.layout_string()
+        self.embed.set_field_at(0,
+                                name="Guessed letters:",
+                                value=self.guessed_string(),
+                                inline=True)
 
-    # Guess check
-    def chkguess(self, str_guess):
-        if str_guess == self.word:
-            return True
-        else:
-            return False
-
-    # Guess check
-    async def wrong_guess(self, ctx):
-        self.guesses -= 1
-        if self.guesses != 0:
-            await ctx.send("Wrong guess! You have " + str(self.guesses) + " tries left.")
-        else:
-            msg = "Game Over\n"
-            msg += "Word was: " + self.word
-            await ctx.send(msg)
-            self.game_started = False
-
-    # Concatenate a group of args
-    def concatenate(self, args):
-        conc = ""
-        for i in args:
-            conc = conc + " " + i
-        return conc.lower()
-
-    # Print layout
-    async def print(self):
+    # Returns layout
+    async def layout_string(self):
         word_size = len(self.word)
         msg = "```"
         for i in range(1, word_size):
@@ -91,11 +68,79 @@ class HangManGame(commands.Cog):
                 else:
                     msg += "_ "
         msg += "```"
-        await self.context.send(msg)
+        return msg
+
+    # Returns guessed letters
+    def guessed_string(self):
+        msg = ""
+        for i in range(0, len(self.guessed_letters)):
+            msg += " " + self.guessed_letters[i].upper()
+        if msg == "":
+            msg = "-"
+        return msg
+
+    # Prints embed
+    async def print(self):
+        guesses = str(self.guesses) + ".png"
+        filepath = "common/hangman_stages/" + guesses
+        file = discord.File(filepath, filename=guesses)
+        if self.game_message != None:
+            await self.game_message.delete()
+        await self.update_embed()
+        self.embed.set_image(url="attachment://" + guesses)
+        self.game_message = await self.context.send(file=file, embed=self.embed)
+
+    # ~~~~~~~~~~~~~~~~~~~ Guess Command Functions ~~~~~~~~~~~~~~~~~~~ #
+
+    # Checks if the given string is equal to the word
+    def chkguess(self, str_guess):
+        if str_guess == self.word:
+            return True
+        else:
+            return False
+
+    # Checks if the given string is equal to the word
+    def letterguess(self):
+        for i in range(1, len(self.word)):
+            if self.word[i] not in self.guessed_letters:
+                return False
+        return True
+
+    # Wrong guess is input
+    async def wrong_guess(self, ctx):
+        self.guesses -= 1
+        if self.guesses != 0:
+            await ctx.send("Wrong guess! You have " + str(self.guesses) + " tries left.")
+            await self.print()
+        else:
+            msg = "Game Over!\n"
+            msg += "The word was: " + self.word
+            await ctx.send(msg)
+            self.game_started = False
+
+    # ~~~~~~~~~~~~~~~~~~~ Game Start/End ~~~~~~~~~~~~~~~~~~~ #
+
+    # Concatenate a group of args | Used to combine the host's args into a string to guess
+    def concatenate(self, args):
+        conc = ""
+        for i in args:
+            conc = conc + " " + i
+        return conc.lower()
 
     # Initialise game
-    async def init_game(self, ctx):
+    async def init_game(self, ctx, args):
+        self.quit_game()
+        self.context = ctx
+        self.players.append(ctx.message.author.id)
+        self.host = ctx.message.author
+        self.word = self.concatenate(args)
         self.game_started = True
+        self.embed = discord.Embed(title="Hang Man",
+                                   description=await self.layout_string(),
+                                   color=0xFF5733)
+        self.embed.add_field(name="Guessed letters:",
+                             value="-",
+                             inline=True)
         await self.joining(ctx)
         await self.print()
 
@@ -103,28 +148,29 @@ class HangManGame(commands.Cog):
     def quit_game(self):
         self.players = []
         self.word = ""
-        self.letters = []
-        self.correct_letters = []
+        self.guessed_letters = []
+        self.game_message = None
         self.game_started = False
         self.guesses = 7
         self.join_message = None
         self.context = None
+        self.host = None
+        self.embed = discord.Embed()
 
     # Game won
     async def win(self, ctx):
-        word_size = len(self.word)
-        msg = "```"
-        for i in range(1, word_size):
-            if self.word[i] == " ":
-                msg += "  "
-            else:
-                msg += self.word[i].upper() + " "
-        msg += "```"
-        await self.context.send(msg)
-        await ctx.send("Victory Royale!")
+        for i in range(1, len(self.word)):
+            if self.word[i] not in self.guessed_letters:
+                self.guessed_letters.append(self.word[i])
+        await self.print()
+        msg = "Victory Royale!\n"
+        msg += ctx.message.author.name + " has won 5 tokens!"
+        await ctx.send(msg)
         self.quit_game()
 
-    # Join message
+    # ~~~~~~~~~~~~~~~~~~~ Player Handling ~~~~~~~~~~~~~~~~~~~ #
+
+    # Prints message for people to join through
     async def joining(self, ctx):
         msg = "React to this message with ✅ to join the game"
         self.join_message = await ctx.send(msg)
@@ -136,29 +182,34 @@ class HangManGame(commands.Cog):
         if user_id not in self.players and self.players.count != self._max_players:
             self.players.append(user_id)
             user_name = ctx.author.name
-            await self.context.send(user_name)
+            await self.context.send(user_name + " has joined the battle!")
         else:
-            await self.context.send("Unable to join the game")
+            await self.context.send("Game is full")
 
-    @commands.group(aliases=['hm'], case_insensitive=True, invoke_without_command=True)
-    async def hangman(self, ctx):
-        await ctx.send(await self.instructions(ctx))
+    # ~~~~~~~~~~~~~~~~~~~ Command Logic ~~~~~~~~~~~~~~~~~~~ #
 
-    @hangman.command(case_insensitive=True, invoke_without_command=True)
-    async def start(self, ctx, *args):
-        self.context = ctx
-        if not args:
-            return
+    # Called when user wants to quit a game
+    async def start_comm(self, ctx, args):
         if not self.game_started:
             await ctx.message.delete()
-            self.players.append(ctx.message.author.id)
-            self.host = ctx.message.author
-            self.word = self.concatenate(args)
-            await self.init_game(ctx)
-        await ctx.send(self.word)
+            await self.init_game(ctx, args)
+        else:
+            await ctx.send("Another game is currently running")
 
-    @hangman.command(aliases=['q'], case_insensitive=True, invoke_without_command=True)
-    async def quit(self, ctx):
+    # Called when the start command has no arguments | A game is started using a random word from wordlist.txt
+    async def wordlist_comm(self, ctx):
+        if not self.game_started:
+            await ctx.message.delete()
+            with open(os.path.join(os.path.dirname(__file__), '../common/wordlist.txt'),
+                      'r') as f:  # List with possible words in a separate file
+                wordlist = [line.strip() for line in f]
+                args = [random.choice(wordlist).lower()]
+            await self.init_game(ctx, args)
+        else:
+            await ctx.send("Another game is currently running")
+
+    # Called when user wants to quit a game
+    async def quit_comm(self, ctx):
         if ctx.message.author.id != self.host.id:
             if ctx.message.author.id in self.players:
                 await ctx.send("Thanks for playing " + ctx.message.author.name)
@@ -172,18 +223,21 @@ class HangManGame(commands.Cog):
         else:
             await ctx.send("No game currently in play")
 
-    @hangman.command(aliases=["gs"], case_insensitive=True)
-    async def guess(self, ctx, *args):
+    # Called when a user wants to guess a letter/phrase
+    async def guess_comm(self, ctx, args):
         str_guess = self.concatenate(args)
-        await ctx.send("str_guess =" + str_guess)
         if len(str_guess) == 2:
             str_guess = str_guess[1]
             if str_guess in self.word and str_guess not in self.guessed_letters:
-                self.correct_letters.append(str_guess)
+                self.guessed_letters.append(str_guess)
+                await ctx.send("Correct!")
+                if self.letterguess():
+                    await self.win(ctx)
+                    return
             else:
                 await self.wrong_guess(ctx)
-            if str_guess not in self.guessed_letters:
-                self.guessed_letters.append(str_guess)
+                if str_guess not in self.guessed_letters:
+                    self.guessed_letters.append(str_guess)
             await self.print()
             return
         if not self.chkguess(str_guess):
@@ -191,16 +245,38 @@ class HangManGame(commands.Cog):
         else:
             await self.win(ctx)
 
-    # Handle reaction
+    # ~~~~~~~~~~~~~~~~~~~ Discord Commands ~~~~~~~~~~~~~~~~~~~ #
+
+    @commands.group(aliases=['hm'], case_insensitive=True, invoke_without_command=True)
+    async def hangman(self, ctx):
+        await ctx.send(self.help_message)
+
+    @hangman.command(case_insensitive=True, invoke_without_command=True)
+    async def start(self, ctx, *args):
+        if not args:
+            await self.wordlist_comm(ctx)
+        else:
+            await self.start_comm(ctx, args)
+
+
+
+    @hangman.command(aliases=['q'], case_insensitive=True, invoke_without_command=True)
+    async def quit(self, ctx):
+        await self.quit_comm(ctx)
+
+    @hangman.command(aliases=["gs"], case_insensitive=True)
+    async def guess(self, ctx, *args):
+        await self.guess_comm(ctx, args)
+
+    # Handles reaction
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
         if user == self.client.user:
             return
-        if self.join_message is not None and reaction.message.id == self.join_message.id and reaction.emoji == "✅":
+        if self.join_message != None and reaction.message.id == self.join_message.id and reaction.emoji == "✅":
             ctx = await self.client.get_context(reaction.message)
             ctx.author = user
             if ctx.author.id not in self.players:
-                await self.context.send("no way")
                 await self.add_player(ctx)
 
 
