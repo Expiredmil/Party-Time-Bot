@@ -18,6 +18,7 @@ class WordScramble(commands.Cog):
     def __init__(self, client):
         self.client = client
         self._game_name = "wordscramble"
+        self.prefix = None
         self._game_command = f"{self.client.command_prefix}wordscramble"
         self.help_message = ""
         self.answer = ""
@@ -34,15 +35,15 @@ class WordScramble(commands.Cog):
         self.restartButton = Button(label="Play again", custom_id="play_again", color="blurple", emoji="🔁")
         self.ctxInit = 0
 
-    def instructions(self):
+    async def instructions(self, ctx):
+        self.prefix = await self.client.get_prefix(ctx)
 
-        msg = f"Start a game by typing `{self.client.command_prefix}ws`.\n"
-        msg += f"Guess the scrambled word by typing `{self.client.command_prefix}ws [guess]`.\n"
-        msg += f"Shuffle the letters from the word by typing `{self.client.command_prefix}ws shuffle`.\n"
-        msg += f"Show the word again by typing `{self.client.command_prefix}ws repeat`.\n"
-        msg += f"Quit an existing game by typing `{self.client.command_prefix}ws quit`.\n"
-        msg += f"Open this help menu by typing `{self.client.command_prefix}ws help`.\n"
-        msg += "Type `prefix?` for necessary prefix\n"
+        msg = f"Start a game by typing `{self.prefix}ws`.\n"
+        msg += f"Guess the scrambled word by typing `{self.prefix}ws [guess]`.\n"
+        msg += f"Shuffle the letters from the word by typing `{self.prefix}ws shuffle`.\n"
+        msg += f"Show the word again by typing `{self.prefix}ws repeat`.\n"
+        msg += f"Quit an existing game by typing `{self.prefix}ws quit`.\n"
+        msg += f"Open this help menu by typing `{self.prefix}ws help`.\n"
         return msg
 
     async def sendEmbed(self, ctx):
@@ -120,7 +121,7 @@ class WordScramble(commands.Cog):
 
 
     async def startGame(self, ctx, *args):
-        await ctx.send(f"Guess the scrambled word by typing `{self.client.command_prefix}ws [guess]`.\n")
+        await ctx.send(f"Guess the scrambled word by typing `{self.prefix}ws [guess]`.\n")
         with open(os.path.join(os.path.dirname(__file__), '../common/wordlist.txt'),
                   'r') as f:                                                            # List with possible words in a separate file
             wordList = [line.strip() for line in f]
@@ -166,8 +167,7 @@ class WordScramble(commands.Cog):
 
     @wordscramble.command(aliases=[])
     async def help(self, ctx):
-        self.help_message = ctx.send(self.instructions())
-        await self.help_message
+        await ctx.send(await self.instructions(ctx))
         return
 
 
