@@ -1,14 +1,6 @@
 from discord.ext import commands
-from server import prefix
-
 import random
 
-
-def instructions():
-    msg = "**Eight-ball Help**\n"
-    msg += "The magic 8ball will tell your future, ask anything you want to him\n"
-    msg += f"`{prefix}eb ask [question]`: Ask 8ball by filling in the question.\n"
-    return msg
 
 
 class EightBall(commands.Cog):
@@ -17,16 +9,21 @@ class EightBall(commands.Cog):
         self.client = client
         self._min_players = 1
         self._game_name = "8ball"
-        self._game_command = f"{prefix}eightball"
         self.help_message = None
 
     # Game instructions
 
+    async def instructions(self, ctx):
+        prefix = await self.client.get_prefix(ctx)
+        msg = "**Eight-ball Help**\n"
+        msg += "The magic 8ball will tell your future, ask anything you want to him\n"
+        msg += f"`{prefix}eb ask [question]`: Ask 8ball by filling in the question.\n"
+        return msg
 
     @commands.group(name='eightball', aliases=['eb', '8b'], case_insensitive=True, invoke_without_command=True)
 
     async def eightball(self, ctx):
-        self.help_message = ctx.send(instructions())
+        self.help_message = ctx.send(await self.instructions(ctx))
         await self.help_message
 
     @eightball.command(aliases=[""])
