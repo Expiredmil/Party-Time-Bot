@@ -1,2 +1,2 @@
 
-DEFAULT_PREFIX = "["
+DEFAULT_PREFIX = "."

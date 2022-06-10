@@ -36,13 +36,13 @@ async def on_ready():
 @client.event
 async def on_message(message):
     msg = message
-    #member = await Members.filter(member_id=msg.author.id).get_or_none()
-    #cur_bal = member.balance
+    member = await Members.filter(member_id=msg.author.id).get_or_none()
+    cur_bal = member.balance
     if msg.content.startswith("hello"):
-        #await Members.filter(member_id=msg.author.id).update(balance=cur_bal-1)
+        await Members.filter(member_id=msg.author.id).update(balance=cur_bal-1)
         await msg.channel.send(f'Hello {msg.author.name}')
-    #if msg.content.startswith("bal?"):
-        #await msg.channel.send(f'{msg.author.name}, your bal = {cur_bal}')
+    if msg.content.startswith("bal?"):
+        await msg.channel.send(f'{msg.author.name}, your bal = {cur_bal}')
     await client.process_commands(msg)
 
 

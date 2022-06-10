@@ -1,26 +1,30 @@
 from discord.ext import commands
-from common.Game import Game
+from server import prefix
+
 import random
 
 
 def instructions():
     msg = "**Eight-ball Help**\n"
     msg += "The magic 8ball will tell your future, ask anything you want to him\n"
-    msg += f"`eb ask [question]`: Ask 8ball by filling in the question.\n"
+    msg += f"`{prefix}eb ask [question]`: Ask 8ball by filling in the question.\n"
     return msg
 
 
-class EightBall(Game):
+class EightBall(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+        self._min_players = 1
         self._game_name = "8ball"
-        self._game_command = f"{self.client.command_prefix}eightball"
+        self._game_command = f"{prefix}eightball"
         self.help_message = None
 
     # Game instructions
 
-    @commands.group(name='eightball', aliases=['eb'], case_insensitive=True, invoke_without_command=True)
+
+    @commands.group(name='eightball', aliases=['eb', '8b'], case_insensitive=True, invoke_without_command=True)
+
     async def eightball(self, ctx):
         self.help_message = ctx.send(instructions())
         await self.help_message
@@ -37,11 +41,6 @@ class EightBall(Game):
                      "Outlook good.",
                      "Yes.",
                      "Signs point to yes.",
-                     "Reply hazy, try again.",
-                     "Ask again later.",
-                     "Better not tell you now.",
-                     "Cannot predict now.",
-                     "Concentrate and ask again.",
                      "Don't count on it.",
                      "My reply is no.",
                      "My sources say no.",

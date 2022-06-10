@@ -4,7 +4,7 @@ from tortoise import fields
 
 class GuildConfig(Model):
     id = fields.BigIntField(pk=True, unique=True, nullable=False)
-    prefix = fields.TextField(default='[')
+    prefix = fields.TextField(default='.')
     welcome_enabled = fields.BooleanField(default=False)
     leave_enabled = fields.BooleanField(default=False)
 
