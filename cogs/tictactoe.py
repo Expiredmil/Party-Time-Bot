@@ -1,10 +1,10 @@
-import asyncio
-import random
-
 import discord
-import discord.embeds
 from discord.ext import commands
+import random
+import discord.embeds
 from discord_ui import Button
+import asyncio
+from models import Members
 
 player1 = ""
 player2 = ""
@@ -15,25 +15,23 @@ global count
 board = []
 
 
-
-
-def checkwinner(winningconditions, mark):
+def check_winner(winning_conditions, mark):
     global gameOver
-    for condition in winningconditions:
+    for condition in winning_conditions:
         if board[condition[0]] == mark and board[condition[1]] == mark and board[condition[2]] == mark:
             gameOver = True
 
 
 winningConditions = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6]
-    ]
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+]
 
 
 class TicTacToe(commands.Cog):
@@ -43,7 +41,7 @@ class TicTacToe(commands.Cog):
         self.help_message = None
         self.prefix = '.'
         self.embed = discord.Embed()
-        self.buttons = [Button()]*9
+        self.buttons = [Button()] * 9
 
     async def instructions(self, ctx):
         self.prefix = await self.client.get_prefix(ctx)
@@ -53,10 +51,16 @@ class TicTacToe(commands.Cog):
         msg += f"Place a tile by clicking the corresponding button\n"
         return msg
 
-    async def sendEmbed(self, ctx, player):
+    @staticmethod
+    async def add_to_balance(player_id, x):
+        member = await Members.filter(member_id=player_id).get_or_none()
+        cur_bal = member.balance
+        await Members.filter(member_id=player_id).update(balance=cur_bal + x)
+
+    async def send_embed(self, ctx, player):
         try:
             if not gameOver:
-                self.embed.description="It is " + str(player) + "'s turn."
+                self.embed.description = "It is " + str(player) + "'s turn."
             for x in range(len(board)):
                 match board[x]:
                     case ":white_large_square:":
@@ -70,11 +74,11 @@ class TicTacToe(commands.Cog):
                                                                [self.buttons[6], self.buttons[7], self.buttons[8]]])
             btn = await msg.wait_for("button", self.client)
             await btn.respond()
-            await self.placeCommand(ctx, int(btn.custom_id)+1, btn.author, msg)
+            await self.place_command(ctx, int(btn.custom_id) + 1, btn.author, msg)
         except asyncio.TimeoutError:
             return
 
-    async def placeCommand(self, ctx, pos: int, author, msg):
+    async def place_command(self, ctx, pos: int, author, msg):
         global turn
         global player1
         global player2
@@ -92,17 +96,18 @@ class TicTacToe(commands.Cog):
                 if 0 < pos < 10 and board[pos - 1] == ":white_large_square:":
                     board[pos - 1] = mark
                     count += 1
-                    checkwinner(winningConditions, mark)
+                    check_winner(winningConditions, mark)
                     if gameOver:
-                        self.embed.description=str(turn) + " (" + mark + ") wins!"
+                        self.embed.description = str(turn) + " (" + mark + ") wins!"
                         await msg.delete()
-                        await self.sendEmbed(ctx, turn)
+                        await self.add_to_balance(turn.id, 5)
+                        await self.send_embed(ctx, turn)
                         return
                     elif count >= 9:
                         gameOver = True
-                        self.embed.description="It's a tie!"
+                        self.embed.description = "It's a tie!"
                         await msg.delete()
-                        await self.sendEmbed(ctx, turn)
+                        await self.send_embed(ctx, turn)
                         return
                     # switch turns
                     if turn == player1:
@@ -116,7 +121,7 @@ class TicTacToe(commands.Cog):
                 await ctx.send("It is not your turn.")
             else:
                 await ctx.send("You are not in this game.")
-            await self.sendEmbed(ctx, turn)
+            await self.send_embed(ctx, turn)
         else:
             await ctx.send('Please start a new game using the ' + self.prefix + 'tictactoe command.')
 
@@ -136,7 +141,8 @@ class TicTacToe(commands.Cog):
         await ctx.message.delete()
         if gameOver:
             try:
-                self.embed = discord.Embed(title="Tic Tac Toe", description="Waiting for opponent to join...", color=0xFF5733)
+                self.embed = discord.Embed(title="Tic Tac Toe", description="Waiting for opponent to join...",
+                                           color=0xFF5733)
                 msg = await ctx.send(embed=self.embed, components=[Button("Join", color="green")])
                 btn = await msg.wait_for("button", self.client, timeout=10)
                 await btn.respond()
@@ -153,9 +159,9 @@ class TicTacToe(commands.Cog):
                 # determine who goes first
                 turn = random.choice([player1, player2])
                 await msg.delete()
-                await self.sendEmbed(ctx, turn)
+                await self.send_embed(ctx, turn)
             except asyncio.TimeoutError:
-                self.embed.description="No opponent has joined."
+                self.embed.description = "No opponent has joined."
                 await ctx.send(embed=self.embed)
         else:
             await ctx.send("A game is already in progress! Finish it before starting a new one.")
