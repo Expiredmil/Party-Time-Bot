@@ -218,7 +218,7 @@ class CheckersGame(commands.Cog):
             self.board[round((xfrom + xto) / 2)][round((yfrom + yto) / 2)] = '_'
             self.hit = True
             self.king = False
-            if 'r' in self.whosemove:
+            if 'b' in self.whosemove:
                 self.red_checkers -= 1
             else:
                 self.blue_checkers -= 1
@@ -489,7 +489,7 @@ class CheckersGame(commands.Cog):
         if self.next_movable:
             self.next_movable = False
             await reaction.message.delete()
-            await self.can_hits_message(ctx,self.can_hit_dirs(xfrom, yfrom))
+            await self.can_hits_message(ctx, self.can_hit_dirs(xfrom, yfrom))
         else:
             await reaction.message.delete()
             await self.move_message(ctx, xfrom, yfrom, None)
@@ -528,9 +528,15 @@ class CheckersGame(commands.Cog):
         # Check for game over
         if self.game_over():
             if self.red_checkers == 0:
-                await ctx.send(f"{self.player2} has won!")
+                x = 10
+                await add_to_balance(self.player2_id, x)
+                await ctx.send(f"{self.player2} has won!\n" /
+                               f"Balance player 2 increased by {x}")
             else:
-                await ctx.send(f"{self.player1} has won!")
+                x = 10
+                await add_to_balance(self.player1_id, x)
+                await ctx.send(f"{self.player1} has won!" /
+                               f"Balance player 1 increased by {x}")
 
         # Check available hits for current player
         self.move[0] = self.x_to_emoji(xto)
@@ -592,12 +598,12 @@ class CheckersGame(commands.Cog):
                 x = 10
                 await add_to_balance(self.player2_id, x)
                 await ctx.send(f"{self.player2} has won!\n" /
-                                f"Balance player 2 increased by {x}")
+                               f"Balance player 2 increased by {x}")
             else:
                 x = 10
                 await add_to_balance(self.player1_id, x)
-                await ctx.send(f"{self.player1} has won!"/
-                                f"Balance player 1 increased by {x}")
+                await ctx.send(f"{self.player1} has won!" /
+                               f"Balance player 1 increased by {x}")
 
         # Set second player
         if self.player2_id == 0:
@@ -642,7 +648,6 @@ class CheckersGame(commands.Cog):
             await self.next_movables_message(ctx, movables)
             return True
         return False
-
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):

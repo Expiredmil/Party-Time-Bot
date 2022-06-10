@@ -21,6 +21,7 @@ class WordScramble(commands.Cog):
         self.shuffledWord = ""
         self.authorid = 0
         self.authorname = ""
+        self.prefix = '.'
         self.started = False
         self.guesses = 0
         self.timer = time.time()
@@ -31,15 +32,15 @@ class WordScramble(commands.Cog):
         self.restartButton = Button(label="Play again", custom_id="play_again", color="blurple", emoji="🔁")
         self.ctxInit = 0
 
-    def instructions(self):
-
-        msg = f"Start a game by typing `{self.client.command_prefix}ws`.\n"
-        msg += f"Guess the scrambled word by typing `{self.client.command_prefix}ws [guess]`.\n"
-        msg += f"Shuffle the letters from the word by typing `{self.client.command_prefix}ws shuffle`.\n"
-        msg += f"Show the word again by typing `{self.client.command_prefix}ws repeat`.\n"
-        msg += f"Quit an existing game by typing `{self.client.command_prefix}ws quit`.\n"
-        msg += f"Open this help menu by typing `{self.client.command_prefix}ws help`.\n"
-        msg += "Type `prefix?` for necessary prefix\n"
+    async def instructions(self, ctx):
+        self.prefix = await self.client.get_prefix(ctx)
+        msg = "**Word scramble Help**\n"
+        msg += f"Start a game by typing `{self.prefix}ws start`.\n"
+        msg += f"Guess the scrambled word by typing `{self.prefix}ws guess [word]`.\n"
+        msg += f"Shuffle the letters from the word by typing `{self.prefix}ws shuffle`.\n"
+        msg += f"Show the word again by typing `{self.prefix}ws repeat`.\n"
+        msg += f"Quit an existing game by typing `{self.prefix}ws quit`.\n"
+        msg += f"Open this help menu by typing `{self.prefix}ws help`.\n"
         return msg
 
     async def add_to_balance(self, player_id, x):
@@ -117,7 +118,7 @@ class WordScramble(commands.Cog):
             await self.end_game(ctx)
 
     async def start_game(self, ctx, *args):
-        await ctx.send(f"Guess the scrambled word by typing `{self.client.command_prefix}ws [guess]`.\n")
+        await ctx.send(f"Guess the scrambled word by typing `{self.prefix}ws guess [word]`.\n")
         with open(os.path.join(os.path.dirname(__file__), '../common/wordlist.txt'),
                   'r') as f:  # List with possible words in a separate file
             wordList = [line.strip() for line in f]
@@ -142,7 +143,13 @@ class WordScramble(commands.Cog):
         await self.send_embed(ctx)
 
     @commands.group(name='wordscramble', aliases=['ws'], invoke_without_command=True)
-    async def wordscramble(self, ctx, *args):
+    async def wordscramble(self, ctx):
+        self.help_message = ctx.send(await self.instructions(ctx))
+        await self.help_message
+        return
+
+    @wordscramble.command()
+    async def start(self, ctx, *args):
         if not self.started:  # Creating a game
             await self.start_game(ctx, *args)
         else:  # Checking whether guessed word is the correct word
@@ -154,13 +161,23 @@ class WordScramble(commands.Cog):
                 await self.check_answer(ctx, args[0].lower())
         return
 
+    @wordscramble.command(aliases=['gs'])
+    async def guess(self, ctx, *args):
+        if not await self.game_started(ctx, ctx.author.id):
+            return
+        elif not args:
+            await ctx.send("Please enter your guess before starting a new game.")
+        else:
+            await self.check_answer(ctx, args[0].lower())
+
+
     @wordscramble.command()
     async def shuffle(self, ctx):
         await self.shuffle_command(ctx)
 
     @wordscramble.command(aliases=[])
     async def help(self, ctx):
-        self.help_message = ctx.send(self.instructions())
+        self.help_message = ctx.send(await self.instructions(ctx))
         await self.help_message
         return
 
@@ -172,7 +189,6 @@ class WordScramble(commands.Cog):
     async def repeat(self, ctx):
         if await self.game_started(ctx, ctx.author.id):
             await self.send_embed(ctx)
-
 
 def setup(client):
     client.add_cog(WordScramble(client))

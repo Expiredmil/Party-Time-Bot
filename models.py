@@ -24,4 +24,4 @@ class LeaveConfig(Model):
 class Members(Model):
     member_id = fields.BigIntField(pk=True, unique=True, nullable=False)
     identity = fields.TextField()
-    balance = fields.BigIntField(nullable=False, default=100)
+    balance = fields.BigIntField(nullable=False, default=0)

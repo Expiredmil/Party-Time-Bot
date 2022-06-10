@@ -38,11 +38,7 @@ async def on_ready():
 async def on_message(message):
     msg = message
     member = await Members.filter(member_id=msg.author.id).get_or_none()
-    if msg.content.startswith("hello"):
-        cur_bal = member.balance
-        await Members.filter(member_id=msg.author.id).update(balance=cur_bal-1)
-        await msg.channel.send(f'Hello {msg.author.name}')
-    if msg.content.startswith("bal?"):
+    if msg.content.startswith(f"{await get_prefix(client, msg)}bal"):
         cur_bal = member.balance
 
         await msg.channel.send(f'{msg.author.name}, your bal = {cur_bal}')
