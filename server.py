@@ -1,33 +1,49 @@
-import json
-import os
-
 import discord
+import os
 from discord.ext import commands
-from discord_ui import UI
+from tortoise import Tortoise
+from models import GuildConfig, Members
 from dotenv import load_dotenv, find_dotenv
+import constants
 
 load_dotenv(find_dotenv())
 TOKEN = os.getenv('TOKEN')
 
-# Open json file
-with open("./config.json") as config_file:
-    config = json.load(config_file)
 
-client = commands.Bot(command_prefix=config['prefix'], intents=discord.Intents.all(), case_insensitive=True)
-ui = UI(client)
+async def get_prefix(bot: commands.Bot, message: discord.Message):
+    config = await GuildConfig.filter(id=message.guild.id).get_or_none()
+    return config.prefix if config else constants.DEFAULT_PREFIX
 
-prefix = config['prefix']
+
+client = commands.Bot(command_prefix=get_prefix, intents=discord.Intents.all())
+
+
+async def connect_db():
+    await Tortoise.init(
+        db_url=f"postgres://yfkkvkgn:ZfcT2glUJ_AnTVrJTlUriBDlNItzFYK7@tyke.db.elephantsql.com/yfkkvkgn",
+        modules={'models': ["models"]}
+    )
+    await Tortoise.generate_schemas()
 
 
 # Running confirmation
 @client.event
 async def on_ready():
+    await connect_db()
     print("Party-Time-Bot running")
 
 
-@client.command()
-async def hello(ctx):
-    await ctx.channel.send(f'Hello {ctx.author.name}')
+@client.event
+async def on_message(message):
+    msg = message
+    member = await Members.filter(member_id=msg.author.id).get_or_none()
+    cur_bal = member.balance
+    if msg.content.startswith("hello"):
+        await Members.filter(member_id=msg.author.id).update(balance=cur_bal-1)
+        await msg.channel.send(f'Hello {msg.author.name}')
+    if msg.content.startswith("bal?"):
+        await msg.channel.send(f'{msg.author.name}, your bal = {cur_bal}')
+    await client.process_commands(msg)
 
 
 @client.command()
@@ -45,7 +61,7 @@ async def unload(ctx, extension):
 
 
 @client.command()
-async def reload_all(ctx):
+async def reload(ctx):
     for filename in os.listdir('./cogs'):
         if filename.endswith('.py'):
             file = filename[:-3]
@@ -73,4 +89,3 @@ for filename in os.listdir('./cogs'):
         print(f'Cog loaded {file}')
 
 client.run(TOKEN)
-
