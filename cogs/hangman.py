@@ -1,30 +1,23 @@
 from discord import Message, User, Embed
 from discord.ext import commands
 
-from discord import User
 from common.Game import Game
 from common.Player import Player
-from server import prefix
+
 
 # To-do list:
 # - Add check for word to be censored by the player "|| ... ||"
 # - Use embeds to display
 
-def instructions():
-    msg = "**Hang Man Help**\n"
-    msg += "A game of hang man where other players guess a word/phrase.\n"
-    msg += f"`{prefix}hm start [phrase] : Start a game with the given word \n"
-    msg += f"{prefix}hm gs [phrase/letter] : Guess a letter or the phrase \n"
-    msg += f"{prefix}hm quit : Quit a running game`"
-    return msg
 
 
-class HangManPlayer(Player):
-    def __int__(self, user: User):
-        self.user = user
+class HangManPlayer(commands.Cog):
+    class Player:
+        def __int__(self, user: User):
+            self.user = user
 
-    def user(self):
-        return self.user
+        def user(self):
+            return self.user
 
 
 class HangManGame(commands.Cog):
@@ -32,9 +25,8 @@ class HangManGame(commands.Cog):
         self.players = []
         self.client = client
         self._game_name = "Hang Man"
-        self._game_command = f"{prefix}hangman"
+        self._game_command = f"{self.client.command_prefix}hangman"
         self._max_players = 5
-        self.help_message = instructions()
         self.word = ""
         self.guessed_letters = []
         self.correct_letters = []
@@ -43,6 +35,15 @@ class HangManGame(commands.Cog):
         self.join_message = None
         self.context = None
         self.host = None
+
+    async def instructions(self, ctx):
+        prefix = await self.client.get_prefix(ctx)
+        msg = "**Hang Man Help**\n"
+        msg += "A game of hang man where other players guess a word/phrase.\n"
+        msg += f"`{prefix}hm start [phrase]` : Start a game with the given word \n"
+        msg += f"`{prefix}hm gs [phrase/letter]` : Guess a letter or the phrase \n"
+        msg += f"`{prefix}hm quit` : Quit a running game\n"
+        return msg
 
     # @property
     # def join_message(self):
@@ -141,7 +142,7 @@ class HangManGame(commands.Cog):
 
     @commands.group(aliases=['hm'], case_insensitive=True, invoke_without_command=True)
     async def hangman(self, ctx):
-        await ctx.send(self.help_message)
+        await ctx.send(await self.instructions(ctx))
 
     @hangman.command(case_insensitive=True, invoke_without_command=True)
     async def start(self, ctx, *args):
@@ -154,6 +155,7 @@ class HangManGame(commands.Cog):
             self.host = ctx.message.author
             self.word = self.concatenate(args)
             await self.init_game(ctx)
+        await ctx.send(self.word)
 
     @hangman.command(aliases=['q'], case_insensitive=True, invoke_without_command=True)
     async def quit(self, ctx):
@@ -173,6 +175,7 @@ class HangManGame(commands.Cog):
     @hangman.command(aliases=["gs"], case_insensitive=True)
     async def guess(self, ctx, *args):
         str_guess = self.concatenate(args)
+        await ctx.send("str_guess =" + str_guess)
         if len(str_guess) == 2:
             str_guess = str_guess[1]
             if str_guess in self.word and str_guess not in self.guessed_letters:
@@ -193,10 +196,11 @@ class HangManGame(commands.Cog):
     async def on_reaction_add(self, reaction, user):
         if user == self.client.user:
             return
-        if self.join_message != None and reaction.message.id == self.join_message.id and reaction.emoji == "✅":
+        if self.join_message is not None and reaction.message.id == self.join_message.id and reaction.emoji == "✅":
             ctx = await self.client.get_context(reaction.message)
             ctx.author = user
             if ctx.author.id not in self.players:
+                await self.context.send("no way")
                 await self.add_player(ctx)
 
 
