@@ -22,7 +22,6 @@ class HangManGame(commands.Cog):
         self.client = client
         self._game_name = "Hang Man"
         self._max_players = 5
-        self.help_message = instructions()
         self.word = ""
         self.guessed_letters = []
         self.game_message = None
@@ -36,12 +35,13 @@ class HangManGame(commands.Cog):
     # ~~~~~~~~~~~~~~~~~~~ Instructions ~~~~~~~~~~~~~~~~~~~ #
 
     async def instructions(self, ctx):
+        prefix = await self.client.get_prefix(ctx)
         msg = "**Hang Man Help**\n"
         msg += "A game of hang man where other players guess a word/phrase.\n"
-        msg += f"`{await self.client.get_prefix(ctx)}hm start : Start a game with a random word \n"
-        msg += f"{await self.client.get_prefix(ctx)}hm start [phrase] : Start a game with the given word/phrase \n"
-        msg += f"{await self.client.get_prefix(ctx)}hm gs [phrase/letter] : Guess a letter or the phrase \n"
-        msg += f"{await self.client.get_prefix(ctx)}hm quit : Quit a running game`"
+        msg += f"`{prefix}hm start : Start a game with a random word \n"
+        msg += f"{prefix}hm start [phrase] : Start a game with the given word/phrase \n"
+        msg += f"{prefix}hm gs [phrase/letter] : Guess a letter or the phrase \n"
+        msg += f"{prefix}hm quit : Quit a running game`"
         return msg
 
     # ~~~~~~~~~~~~~~~~~~~ Editing Embed ~~~~~~~~~~~~~~~~~~~ #
