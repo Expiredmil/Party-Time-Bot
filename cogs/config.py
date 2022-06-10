@@ -1,6 +1,8 @@
-from discord.ext import commands
-import discord
 import typing
+
+import discord
+from discord.ext import commands
+
 import constants
 from models import GuildConfig, WelcomeConfig, LeaveConfig
 from server import client

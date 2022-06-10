@@ -1,9 +1,6 @@
 from discord.ext import commands
-import discord
-import typing
-import constants
-from models import GuildConfig, WelcomeConfig, LeaveConfig, Members
-from server import client
+
+from models import Members
 
 
 class Leaderboard(commands.Cog):

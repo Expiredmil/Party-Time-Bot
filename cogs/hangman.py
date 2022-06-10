@@ -1,8 +1,5 @@
-from discord import Message, User, Embed
+from discord import User
 from discord.ext import commands
-
-from common.Game import Game
-from common.Player import Player
 
 
 # To-do list:
