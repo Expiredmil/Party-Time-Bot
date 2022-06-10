@@ -2,7 +2,11 @@ import discord
 from discord.ext import commands
 import random
 from server import prefix
+import discord.embeds
 from common.Game import Game
+from asyncio import TimeoutError
+from discord_ui import UI, Button
+import asyncio
 
 player1 = ""
 player2 = ""
@@ -16,8 +20,8 @@ board = []
 def instructions():
     msg = "**TicTacToe Help**\n"
     msg += "Play TicTacToe against an opponent or yourself!\n"
-    msg += f"`{prefix}ttt start @opponent` - start a game again opponent\n"
-    msg += f"` {prefix}ttt place (1-9)` - during game place on tile\n"
+    msg += f"`{prefix}ttt start` - start a game\n"
+    msg += f"Place a tile by clicking the corresponding button\n"
     return msg
 
 
@@ -45,55 +49,31 @@ class TicTacToe(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.help_message = None
+        self.embed = discord.Embed()
+        self.buttons = [Button()]*9
 
-    @commands.group(name='tictactoe', aliases=['ttt'], invoke_without_command=True)
-    async def tictactoe(self, ctx):
-        self.help_message = ctx.send(instructions())
-        await self.help_message
-
-    @tictactoe.command()
-    async def start(self, ctx, p2: discord.Member):
-        global count
-        global player1
-        global player2
-        global turn
-        global gameOver
-
-        if gameOver:
-            global board
-            board = [":white_large_square:", ":white_large_square:", ":white_large_square:",
-                     ":white_large_square:", ":white_large_square:", ":white_large_square:",
-                     ":white_large_square:", ":white_large_square:", ":white_large_square:"]
-            turn = ""
-            gameOver = False
-            count = 0
-
-            player1 = ctx.author
-            player2 = p2
-
-            # print the board
-            line = ""
+    async def sendEmbed(self, ctx, player):
+        try:
+            if not gameOver:
+                self.embed.description="It is " + str(player) + "'s turn."
             for x in range(len(board)):
-                if x == 2 or x == 5 or x == 8:
-                    line += " " + board[x]
-                    await ctx.send(line)
-                    line = ""
-                else:
-                    line += " " + board[x]
+                match board[x]:
+                    case ":white_large_square:":
+                        self.buttons[x] = Button(color="grey", custom_id=str(x))
+                    case "✖":
+                        self.buttons[x] = Button(color="green", emoji="✖", custom_id=str(x))
+                    case "⚪":
+                        self.buttons[x] = Button(color="red", emoji="⚪", custom_id=str(x))
+            msg = await ctx.send(embed=self.embed, components=[[self.buttons[0], self.buttons[1], self.buttons[2]],
+                                                               [self.buttons[3], self.buttons[4], self.buttons[5]],
+                                                               [self.buttons[6], self.buttons[7], self.buttons[8]]])
+            btn = await msg.wait_for("button", self.client)
+            await btn.respond()
+            await self.placeCommand(ctx, int(btn.custom_id)+1, btn.author, msg)
+        except asyncio.TimeoutError:
+            return
 
-            # determine who goes first
-            num = random.randint(1, 2)
-            if num == 1:
-                turn = player1
-                await ctx.send("It is <@" + str(player1.id) + ">'s turn.")
-            elif num == 2:
-                turn = player2
-                await ctx.send("It is <@" + str(player2.id) + ">'s turn.")
-        else:
-            await ctx.send("A game is already in progress! Finish it before starting a new one.")
-
-    @tictactoe.command()
-    async def place(self, ctx, pos: int):
+    async def placeCommand(self, ctx, pos: int, author, msg):
         global turn
         global player1
         global player2
@@ -103,49 +83,84 @@ class TicTacToe(commands.Cog):
 
         if not gameOver:
             mark = ""
-            if turn == ctx.author:
+            if turn == author:
                 if turn == player1 and count % 2 == 1:
-                    mark = ":regional_indicator_x:"
+                    mark = "✖"
                 elif turn == player2 and count % 2 == 0:
-                    mark = ":o2:"
+                    mark = "⚪"
                 if 0 < pos < 10 and board[pos - 1] == ":white_large_square:":
                     board[pos - 1] = mark
                     count += 1
-
-                    # print the board
-                    line = ""
-                    for x in range(len(board)):
-                        if x == 2 or x == 5 or x == 8:
-                            line += " " + board[x]
-                            await ctx.send(line)
-                            line = ""
-                        else:
-                            line += " " + board[x]
-
                     checkwinner(winningConditions, mark)
-                    print(count)
                     if gameOver:
-                        await ctx.send(mark + " wins!")
+                        self.embed.description=str(turn) + " (" + mark + ") wins!"
+                        await msg.delete()
+                        await self.sendEmbed(ctx, turn)
+                        return
                     elif count >= 9:
                         gameOver = True
-                        await ctx.send("It's a tie!")
-
+                        self.embed.description="It's a tie!"
+                        await msg.delete()
+                        await self.sendEmbed(ctx, turn)
+                        return
                     # switch turns
                     if turn == player1:
                         turn = player2
                     elif turn == player2:
                         turn = player1
+                    await msg.delete()
                 else:
                     await ctx.send("Be sure to choose an integer between 1 and 9 (inclusive) and an unmarked tile.")
-            elif ctx.author == player1 or ctx.author == player2:
+            elif author == player1 or author == player2:
                 await ctx.send("It is not your turn.")
             else:
                 await ctx.send("You are not in this game.")
+            await self.sendEmbed(ctx, turn)
         else:
-            await ctx.send('Please start a new game using the '+prefix +'tictactoe command.')
+            await ctx.send('Please start a new game using the ' + prefix + 'tictactoe command.')
+
+    @commands.group(name='tictactoe', aliases=['ttt'], invoke_without_command=True)
+    async def tictactoe(self, ctx):
+        self.help_message = ctx.send(instructions())
+        await self.help_message
 
     @tictactoe.command()
-    async def endgame(self, ctx):
+    async def start(self, ctx):
+        global count
+        global player1
+        global player2
+        global turn
+        global gameOver
+
+        await ctx.message.delete()
+        if gameOver:
+            try:
+                self.embed = discord.Embed(title="Tic Tac Toe", description="Waiting for opponent to join...", color=0xFF5733)
+                msg = await ctx.send(embed=self.embed, components=[Button("Join", color="green")])
+                btn = await msg.wait_for("button", self.client, timeout=10)
+                await btn.respond()
+                global board
+                board = [":white_large_square:", ":white_large_square:", ":white_large_square:",
+                         ":white_large_square:", ":white_large_square:", ":white_large_square:",
+                         ":white_large_square:", ":white_large_square:", ":white_large_square:"]
+                turn = ""
+                gameOver = False
+                count = 0
+
+                player1 = ctx.author
+                player2 = btn.author
+                # determine who goes first
+                turn = random.choice([player1, player2])
+                await msg.delete()
+                await self.sendEmbed(ctx, turn)
+            except asyncio.TimeoutError:
+                self.embed.description="No opponent has joined."
+                await ctx.send(embed=self.embed)
+        else:
+            await ctx.send("A game is already in progress! Finish it before starting a new one.")
+
+    @tictactoe.command()
+    async def quit(self, ctx):
         global gameOver
         global count
         if not gameOver:
@@ -157,27 +172,6 @@ class TicTacToe(commands.Cog):
                 await ctx.send("You cannot end a game that you are not in!")
         else:
             await ctx.send("There is no started game to end!")
-
-    @tictactoe.error
-    async def tictactoe_error(self, ctx, error):
-        print(error)
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please mention a opponent for this command.")
-        elif isinstance(error, commands.BadArgument):
-            await ctx.send("Please make sure to mention/ping players (ie. <@980446423642411098>).")
-
-    @place.error
-    async def place_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            if gameOver:
-                await ctx.send('Please start a new game using the '+prefix +'tictactoe command.')
-            else:
-                await ctx.send("Please enter a position you would like to mark.")
-        elif isinstance(error, commands.BadArgument):
-            if gameOver:
-                await ctx.send('Please start a new game using the '+prefix +'tictactoe command.')
-            else:
-                await ctx.send("Please make sure to enter an integer.")
 
 
 def setup(client):

@@ -49,7 +49,7 @@ class WordScramble(commands.Cog):
     async def sendEmbed(self, ctx):
         try:
             msg = await ctx.send(embed=self.embed, components=[self.shuffleButton, self.quitButton])
-            btn = await msg.wait_for("button", self.client, timeout=20)
+            btn = await msg.wait_for("button", self.client)
             await btn.respond()
             if await self.isGameStarted(ctx, btn.author.id):
                 if btn.custom_id == "quit":

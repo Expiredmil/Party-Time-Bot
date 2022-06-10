@@ -1,3 +1,4 @@
+import asyncio
 from copy import copy
 
 import discord
@@ -347,7 +348,7 @@ class CheckersGame(commands.Cog):
             self.switch_player()
             await msg.delete()
             await self.print_message(ctx)
-        except TimeoutError:
+        except asyncio.TimeoutError:
             await msg.delete()
             await msg.delete()
             await ctx.send("timeout")

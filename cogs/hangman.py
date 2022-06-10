@@ -1,6 +1,7 @@
 from discord import Message, User, Embed
 from discord.ext import commands
 
+from discord import User
 from common.Game import Game
 from common.Player import Player
 from server import prefix
@@ -19,13 +20,15 @@ def instructions():
 
 
 class HangManPlayer(Player):
-    def __init__(self, user: User):
-        super().__init__(user)
+    def __int__(self, user: User):
+        self.user = user
+
+    def user(self):
+        return self.user
 
 
-class HangManGame(Game):
+class HangManGame(commands.Cog):
     def __init__(self, client):
-        super().__init__(client)
         self.players = []
         self.client = client
         self._game_name = "Hang Man"
@@ -129,7 +132,7 @@ class HangManGame(Game):
     # Add a player to the game
     async def add_player(self, ctx):
         user_id = ctx.author.id
-        if user_id not in self.players and self.players.count != self.max_players:
+        if user_id not in self.players and self.players.count != self._max_players:
             self.players.append(user_id)
             user_name = ctx.author.name
             await self.context.send(user_name)
@@ -151,7 +154,6 @@ class HangManGame(Game):
             self.host = ctx.message.author
             self.word = self.concatenate(args)
             await self.init_game(ctx)
-        await ctx.send(self.word)
 
     @hangman.command(aliases=['q'], case_insensitive=True, invoke_without_command=True)
     async def quit(self, ctx):
@@ -171,7 +173,6 @@ class HangManGame(Game):
     @hangman.command(aliases=["gs"], case_insensitive=True)
     async def guess(self, ctx, *args):
         str_guess = self.concatenate(args)
-        await ctx.send("str_guess =" + str_guess)
         if len(str_guess) == 2:
             str_guess = str_guess[1]
             if str_guess in self.word and str_guess not in self.guessed_letters:
@@ -196,7 +197,6 @@ class HangManGame(Game):
             ctx = await self.client.get_context(reaction.message)
             ctx.author = user
             if ctx.author.id not in self.players:
-                await self.context.send("no way")
                 await self.add_player(ctx)
 
 
